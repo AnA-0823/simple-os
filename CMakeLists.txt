@@ -11,9 +11,12 @@ set(CMAKE_OBJCOPY aarch64-none-elf-objcopy)
 set(CMAKE_C_FLAGS "-ffreestanding -nostdlib -O0 -Wall -Wextra")
 set(CMAKE_EXE_LINKER_FLAGS "-T ${CMAKE_SOURCE_DIR}/linker.ld -nostdlib")
 
+include_directories(include)
+
 add_executable(kernel.elf
         src/boot.S
         src/main.c
+        src/uart.c
 )
 
 add_custom_command(TARGET kernel.elf POST_BUILD
