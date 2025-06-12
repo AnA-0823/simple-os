@@ -6,7 +6,7 @@ set(CMAKE_SYSTEM_PROCESSOR aarch64)
 #set(CMAKE_SOURCE_DIR src)
 
 # 工具链前缀
-set(TOOLPREFIX "aarch64-linux-gnu-")
+set(TOOLPREFIX "aarch64-none-elf-")
 
 # 设置工具链
 set(CMAKE_C_COMPILER ${TOOLPREFIX}gcc)
@@ -70,10 +70,13 @@ add_custom_target(qemu
         -cpu cortex-a72
         -machine virt,gic-version=3
         -kernel kernel.bin
-#        -m 128M
+        -m 128M
         -smp ${CPUS}
         -nographic
         -serial mon:stdio
+        -monitor none
+        -d guest_errors
+        -D qemu.log
         DEPENDS kernel.elf
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         COMMENT "Running QEMU with kernel.bin"

@@ -2,22 +2,23 @@ ENTRY(_start)
 
 SECTIONS
 {
-    . = 0x80000;
+    . = 0x40000000;
 
     .text : {
-        *(.text.boot)
-        *(.text*)
+        KEEP(*(.text.boot))
+        *(.text .text.*)
     }
 
-    .rodata : { *(.rodata*) }
+    .rodata : {
+        *(.rodata*)
+    }
 
-    .data : { *(.data*) }
+    .data : {
+        *(.data*)
+    }
 
     .bss : {
-        __bss_start = .;
         *(.bss*)
-        __bss_end = .;
+        *(COMMON)
     }
-
-    /DISCARD/ : { *(.comment) *(.note*) }
 }
