@@ -1,21 +1,18 @@
-    .section .text
-    .global _boot
-    .align 7
+.section .text.boot
+.globl _start
 
-_boot:
-    /* 初始化栈指针 SP */
-    ldr x0, =stack_top
+_start:
+    // 设置栈指针（在空闲高地址）
+    ldr x0, =_stack_top
     mov sp, x0
 
-    /* 跳转到 C 程序入口 */
+    // 跳转到 C 语言主函数
     bl main
 
-hang:
-    wfe     /* 等待事件，低功耗死循环 */
-    b hang
+1:
+    wfe
+    b 1b
 
-    .section .bss
-    .align 7
-stack:
-    .skip 0x4000         /* 16KB 栈 */
-stack_top:
+.section .bss
+    .space 4096
+_stack_top:

@@ -1,12 +1,12 @@
 #include "uart.h"
 
 void main() {
-    uart_puts("Hello World on ARM64 Bare Metal!\n");
+    uart_init();
+    uart_puts("Hello, World!\n");
+
     while (1) {
+        // 回显输入
         char c = uart_getc();
         uart_putc(c);
-        if (c == '\r') {
-          uart_putc('\n');
-        }
     }
 }

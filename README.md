@@ -15,7 +15,7 @@ ARMv8-A,AArch64
 ### 开发工具
 
 - CMake v3.28.3
-- Arm GNU Toolchain 14.2.Rel1 (Build arm-14.52)
+- aarch64-linux-gnu-gcc v13.3.0
 
 ### 核心功能
 
@@ -32,3 +32,5 @@ cd build
 cmake ..
 make qemu
 ```
+
+### 清理编译
