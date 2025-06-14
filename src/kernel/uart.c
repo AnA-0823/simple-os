@@ -52,3 +52,20 @@ void uart_puts(const char *s) {
     }
 }
 
+// 发送十六进制数
+void uart_put_hex(uint64 n) {
+    const char hex_chars[] = "0123456789ABCDEF";
+    char hex_str[17];
+    int i;
+    
+    // 转换数字为十六进制字符串
+    hex_str[16] = '\0';
+    for(i = 15; i >= 0; i--) {
+        hex_str[i] = hex_chars[n & 0xF];
+        n >>= 4;
+    }
+    
+    // 发送字符串
+    uart_puts(hex_str);
+}
+
