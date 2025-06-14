@@ -30,23 +30,12 @@ set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -Og -ggdb -mcpu=cortex-a72 -MD -I.")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -T ${CMAKE_SOURCE_DIR}/src/kernel/kernel.ld -nostdlib -z max-page-size=4096")
 
 # 添加源文件
-
 set(SOURCES
-        src/boot.S
-        src/main.c
-        src/uart.c
-        #        src/boot.S
-        #        src/main.c
-        #        src/uart.c
-        #        src/kalloc.c
-        #        src/vm.c
-        #        src/proc.c
-        #        src/trap.c
-        #        src/syscall.c
-        #        src/console.c
-        #        src/printf.c
-        #        src/string.c
-        #        src/spinlock.c
+        src/kernel/boot.S
+        src/kernel/main.c
+        src/kernel/uart.c
+        src/kernel/proc.c
+        src/kernel/switch.S
 )
 
 # 创建可执行文件
