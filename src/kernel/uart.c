@@ -1,6 +1,7 @@
 #include "uart.h"
+#include "memlayout.h"
 
-#define UART0_BASE 0x09000000UL
+#define UART0_BASE UART0
 
 // PL011 UART 寄存器定义
 #define DR    0x00
