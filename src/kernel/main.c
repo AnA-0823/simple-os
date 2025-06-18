@@ -1,5 +1,6 @@
 #include "uart.h"
 #include "proc.h"
+#include "mm.h"
 
 // 测试进程的栈大小
 #define STACK_SIZE 4096
@@ -110,6 +111,8 @@ void main(void) {
     uart_init();
     // 初始化进程管理
     proc_init();
+    // 初始化内存管理
+    init_mm();
     
     // 创建三个测试进程
     struct proc *p1 = proc_alloc();

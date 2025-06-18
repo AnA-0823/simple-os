@@ -2,8 +2,6 @@
 #ifndef _PROC_H
 #define _PROC_H
 
-enum procstate { UNUSED, USED, BLOCKED, RUNNABLE, RUNNING, ZOMBIE };
-
 // CPU数
 #define NCPU 1
 
@@ -27,6 +25,9 @@ struct context {
     uint64 x29;    // 帧指针
     uint64 x30;    // 链接寄存器
 };
+
+// 进程状态枚举
+enum procstate { UNUSED, USED, BLOCKED, RUNNABLE, RUNNING, ZOMBIE };
 
 // 进程控制块结构
 struct proc {

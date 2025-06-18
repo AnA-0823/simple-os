@@ -36,6 +36,8 @@ set(SOURCES
         src/kernel/uart.c
         src/kernel/proc.c
         src/kernel/switch.S
+        src/kernel/mm.c
+        src/kernel/mm.h
 )
 
 # 创建可执行文件
