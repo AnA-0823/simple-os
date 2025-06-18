@@ -39,3 +39,41 @@ void init_mm(void) {
         bitmap_set(i);
     }
 }
+
+// 申请连续页
+void* alloc_pages(uint32 number_of_pages) {
+    if (number_of_pages == 0 || number_of_pages > TOTAL_PAGES) return NULL;
+
+    for (uint32 i = 0; i <= TOTAL_PAGES - number_of_pages; i++) {
+        uint32 found = 1;
+        for (uint32 j = 0; j < number_of_pages; j++) {
+            if (bitmap_test(i + j)) {
+                found = 0;
+                i += j;
+                break;
+            }
+        }
+        if (found) {
+            for (uint32 j = 0; j < number_of_pages; j++) {
+                bitmap_set(i + j);
+            }
+            return (void *)(MEM_START + i * PAGE_SIZE);
+        }
+    }
+    return NULL; // 分配失败
+}
+
+// 释放连续页
+void free_pages(void *addr, uint32 number_of_pages) {
+    uint64 page_addr = (uint64)addr;
+    if (page_addr < MEM_START || page_addr >= MEM_END || (page_addr - MEM_START) % PAGE_SIZE != 0) {
+        return; // 非法地址
+    }
+    uint32 index = (page_addr - MEM_START) / PAGE_SIZE;
+    if (index + number_of_pages > TOTAL_PAGES) {
+        return; // 越界
+    }
+    for (uint32 i = 0; i < number_of_pages; i++) {
+        bitmap_clear(index + i);
+    }
+}

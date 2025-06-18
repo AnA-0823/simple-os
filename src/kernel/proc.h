@@ -33,7 +33,7 @@ enum procstate { UNUSED, USED, BLOCKED, RUNNABLE, RUNNING, ZOMBIE };
 struct proc {
     uint64 state;        // 进程状态
     uint64 pid;          // 进程ID
-    uint64 *kstack;      // 内核栈指针
+    uint64 kstack;      // 内核栈指针
     struct context context; // 进程上下文
 };
 

@@ -2,14 +2,6 @@
 #include "proc.h"
 #include "mm.h"
 
-// 测试进程的栈大小
-#define STACK_SIZE 4096
-
-// 测试进程的栈空间
-static uint64 proc1_stack[STACK_SIZE] __attribute__((aligned(16)));
-static uint64 proc2_stack[STACK_SIZE] __attribute__((aligned(16)));
-static uint64 proc3_stack[STACK_SIZE] __attribute__((aligned(16)));
-
 // 测试进程函数
 void proc1_func(void) {
     while(1) {
@@ -67,10 +59,10 @@ static void print_context_info(struct context *ctx, const char *name) {
 }
 
 // 初始化进程栈和上下文
-void init_proc_stack(struct proc *p, void (*func)(void), uint64 *stack) {
+void init_proc_stack(struct proc *p, void (*func)(void), void *stack, uint32 stack_size) {
     // 设置栈指针（栈是向下增长的，所以栈顶在数组末尾）
-    uint64 *stack_top = stack + STACK_SIZE;
-    p->kstack = (uint64 *)stack_top;
+    void *stack_top = stack + stack_size;
+    p->kstack = (uint64)stack_top;
     
     // 设置上下文
     p->context.sp = (uint64)stack_top;  // 栈指针指向栈顶
@@ -123,11 +115,16 @@ void main(void) {
         uart_puts("Failed to allocate processes!\n");
         return;
     }
-    
+
+    // 每个进程请求16kb栈
+    void *stack1 = alloc_pages(4);
+    void *stack2 = alloc_pages(4);
+    void *stack3 = alloc_pages(4);
+
     // 初始化进程栈和上下文
-    init_proc_stack(p1, proc1_func, proc1_stack);
-    init_proc_stack(p2, proc2_func, proc2_stack);
-    init_proc_stack(p3, proc3_func, proc3_stack);
+    init_proc_stack(p1, proc1_func, stack1, 16 * 1024);
+    init_proc_stack(p2, proc2_func, stack2, 16 * 1024);
+    init_proc_stack(p3, proc3_func, stack3, 16 * 1024);
     
     // 将进程加入就绪队列
     p1->state = RUNNABLE;
