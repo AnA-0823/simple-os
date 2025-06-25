@@ -2,6 +2,7 @@
 #include "proc.h"
 #include "mm.h"
 #include "virtio_blk.h"
+#include "fat.h"
 
 // 测试进程函数
 void proc1_func(void) {
@@ -150,6 +151,53 @@ void test_virtio_blk(void) {
     }
 }
 
+void test_fat(void) {
+    uart_puts("\nFAT 文件系统测试开始\n");
+    // 1. 新建文件并写入内容
+    const char *fn1 = "TEST1   TXT";
+    const char *fn2 = "TEST2   TXT";
+    char buf1[32] = "Hello, this is file 1!";
+    char buf2[32] = "File 2, first content.";
+    int w1 = fat_write_file(fn1, buf1, 23, 0);
+    int w2 = fat_write_file(fn2, buf2, 22, 0);
+    uart_puts("新建并写入TEST1.TXT字节数: "); uart_put_hex(w1); uart_puts("\n");
+    uart_puts("新建并写入TEST2.TXT字节数: "); uart_put_hex(w2); uart_puts("\n");
+    // 2. 覆盖写入同名文件
+    char buf1b[32] = "Overwrite file 1!";
+    int w1b = fat_write_file(fn1, buf1b, 18, 0);
+    uart_puts("覆盖写入TEST1.TXT字节数: "); uart_put_hex(w1b); uart_puts("\n");
+    // 3. 读取文件内容
+    char rbuf[40];
+    int r1 = fat_read_file(fn1, rbuf, 23, 0);
+    rbuf[r1 > 0 ? r1 : 0] = 0;
+    uart_puts("读取TEST1.TXT内容: "); uart_puts(rbuf); uart_puts("\n");
+    int r2 = fat_read_file(fn2, rbuf, 22, 0);
+    rbuf[r2 > 0 ? r2 : 0] = 0;
+    uart_puts("读取TEST2.TXT内容: "); uart_puts(rbuf); uart_puts("\n");
+    // 4. 读取不存在的文件
+    int r3 = fat_read_file("NOFILE  TXT", rbuf, 20, 0);
+    uart_puts("读取NOFILE.TXT返回: "); uart_put_hex(r3); uart_puts(" (应为-1)\n");
+    // 5. 遍历根目录
+    uart_puts("根目录文件列表:\n");
+    struct fat_dir_entry entries[16];
+    int n = fat_list_dir("/", entries, 16);
+    for (int i = 0; i < n; i++) {
+        if (entries[i].name[0] == 0x00 || entries[i].name[0] == 0xE5) continue; // 跳过空/已删除
+        // 打印8.3文件名
+        char name[12];
+        for (int j = 0; j < 8; j++) name[j] = entries[i].name[j];
+        name[8] = '.';
+        for (int j = 0; j < 3; j++) name[9 + j] = entries[i].name[8 + j];
+        name[11] = 0;
+        uart_puts("  ");
+        uart_puts(name);
+        uart_puts(" size: ");
+        uart_put_hex(entries[i].size);
+        uart_puts("\n");
+    }
+    uart_puts("[TEST] FAT 文件系统测试结束\n\n");
+}
+
 void test_proc_and_mm(void) {
     // 创建三个测试进程
     struct proc *p1 = proc_alloc();
@@ -190,9 +238,11 @@ void main(void) {
     init_mm();
     // 初始化 virtio 块设备
     virtio_blk_init();
-    
-    // 测试 virtio 块设备
-    test_virtio_blk();
+    // 初始化 FAT 文件系统
+    fat_init();
+
+    // FAT 文件系统测试
+    test_fat();
     // 测试进程管理和内存管理
     test_proc_and_mm();
     

@@ -38,6 +38,7 @@ set(SOURCES
         src/kernel/switch.S
         src/kernel/mm.c
         src/kernel/virtio_blk.c
+        src/kernel/fat.c
 )
 
 # 创建可执行文件
@@ -61,7 +62,8 @@ add_custom_target(disk.img
         COMMAND ${CMAKE_COMMAND} -E echo "Creating 10MB disk image..."
         COMMAND ${CMAKE_COMMAND} -E remove -f disk.img
         COMMAND dd if=/dev/zero of=disk.img bs=1M count=10
-        COMMENT "Creating 10MB disk image"
+        COMMAND mkfs.fat -F 16 disk.img
+        COMMENT "Create and format FAT16 disk image"
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )
 
