@@ -15,6 +15,7 @@ ARMv8-A,AArch64
 - CMake v3.28.3
 - Arm GNU Toolchain 14.2.Rel1 (Build arm-14.52)
 - qemu-system-aarch64 v8.2.2
+- mkfs.fat v4.2
 
 ## 核心功能
 
@@ -80,4 +81,12 @@ aarch64-none-elf-gcc --version
 
 ```bash
 qemu-system-aarch64 --version
+```
+
+### FAT镜像制作失败
+
+确保 `mkfs.fat` 是可运行的命令
+
+```bash
+mkfs.fat --version
 ```
