@@ -122,3 +122,137 @@ void virtio_blk_init(void) {
 
     uart_puts("Virtio block device initialized\n");
 }
+
+// 查找空闲描述符，标记为非空闲，返回其索引
+static int alloc_desc(void) {
+    for(int i = 0; i < VIRTIO_NUM_DESC; i++) {
+        if(disk.free[i]) {
+            disk.free[i] = 0;
+            return i;
+        }
+    }
+    return -1;
+}
+
+// 标记描述符为空闲
+static void free_desc(int i) {
+    if(i >= VIRTIO_NUM_DESC) {
+        uart_puts("ERROR: free_desc: invalid index\n");
+        return;
+    }
+    if(disk.free[i]) {
+        uart_puts("ERROR: free_desc: already free\n");
+        return;
+    }
+    disk.desc[i].addr = 0;
+    disk.desc[i].len = 0;
+    disk.desc[i].flags = 0;
+    disk.desc[i].next = 0;
+    disk.free[i] = 1;
+}
+
+// 释放描述符链
+static void free_chain(int i) {
+    while(1) {
+        int flag = disk.desc[i].flags;
+        int nxt = disk.desc[i].next;
+        free_desc(i);
+        if(flag & VRING_DESC_F_NEXT)
+            i = nxt;
+        else
+            break;
+    }
+}
+
+// 分配三个描述符（不需要连续）
+// 磁盘传输总是使用三个描述符
+static int alloc3_desc(int *idx) {
+    for(int i = 0; i < 3; i++) {
+        idx[i] = alloc_desc();
+        if(idx[i] < 0) {
+            for(int j = 0; j < i; j++)
+                free_desc(idx[j]);
+            return -1;
+        }
+    }
+    return 0;
+}
+
+static void wait_for_done(void) {
+    while(disk.used->idx == disk.used_idx) {
+        // 检查并确认设备中断
+        uint32 status = *R(VIRTIO_MMIO_INTERRUPT_STATUS);
+        if (status & 1) { // Bit 0 表示“已用缓冲区通知”
+            *R(VIRTIO_MMIO_INTERRUPT_ACK) = status; // 确认中断
+            asm volatile("dsb sy" ::: "memory");
+        }
+    }
+}
+
+// 块设备读写操作
+int virtio_blk_rw(char *buf, uint32 sector, int write) {
+    int idx[3];
+    char status = 0xFF; // 初始化 status 为一个非零值，以便观察变化
+
+    // 分配三个描述符
+    if(alloc3_desc(idx) < 0) {
+        uart_puts("ERROR: failed to allocate descriptors\n");
+        return -1;
+    }
+
+    // 设置请求头
+    struct virtio_blk_req *req = &disk.ops[idx[0]];
+    req->type = write ? VIRTIO_BLK_T_OUT : VIRTIO_BLK_T_IN;
+    req->reserved = 0;
+    req->sector = sector;
+
+    // 设置第一个描述符（请求头）
+    disk.desc[idx[0]].addr = (uint64)req;
+    disk.desc[idx[0]].len = sizeof(struct virtio_blk_req);
+    disk.desc[idx[0]].flags = VRING_DESC_F_NEXT;
+    disk.desc[idx[0]].next = idx[1];
+
+    // 设置第二个描述符（数据缓冲区）
+    disk.desc[idx[1]].addr = (uint64)buf;
+    disk.desc[idx[1]].len = 512; // 扇区大小
+    disk.desc[idx[1]].flags = VRING_DESC_F_NEXT | (write ? 0 : VRING_DESC_F_WRITE);
+    disk.desc[idx[1]].next = idx[2];
+
+    // 设置第三个描述符（状态字节）
+    disk.desc[idx[2]].addr = (uint64)&status;
+    disk.desc[idx[2]].len = 1;
+    disk.desc[idx[2]].flags = VRING_DESC_F_WRITE;
+    disk.desc[idx[2]].next = 0;
+
+    // 保存操作信息
+    disk.info[idx[0]].buf = buf;
+    disk.info[idx[0]].write = write;
+    disk.info[idx[0]].sector = sector;
+
+    // 将描述符添加到可用环
+    int avail_idx = disk.avail->idx % VIRTIO_NUM_DESC;
+    disk.avail->ring[avail_idx] = idx[0];
+    disk.avail->idx++;
+
+    // 通知设备
+    *R(VIRTIO_MMIO_QUEUE_NOTIFY) = 0;
+
+    // 等待完成
+    wait_for_done();
+
+    // 处理完成的请求
+    while(disk.used->idx != disk.used_idx) {
+        int id = disk.used->ring[disk.used_idx % VIRTIO_NUM_DESC].id;
+        free_chain(id);
+        disk.used_idx++;
+    }
+
+    // 检查状态
+    if(status != 0) {
+        uart_puts("ERROR: disk operation failed with status ");
+        uart_put_hex(status);
+        uart_puts("!\n");
+        return -1;
+    }
+    return 0;
+}

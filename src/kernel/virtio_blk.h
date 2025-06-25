@@ -84,5 +84,6 @@ struct virtio_blk_req {
 
 // 函数声明
 void virtio_blk_init(void);
+int virtio_blk_rw(char *buf, uint32 sector, int write);
 
 #endif
