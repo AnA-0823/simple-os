@@ -1,6 +1,7 @@
 #include "uart.h"
 #include "proc.h"
 #include "mm.h"
+#include "virtio_blk.h"
 
 // 测试进程函数
 void proc1_func(void) {
@@ -98,19 +99,63 @@ void init_proc_stack(struct proc *p, void (*func)(void), void *stack, uint32 sta
     print_context_info(&p->context, "initial context");
 }
 
-void main(void) {
-    // 初始化串口
-    uart_init();
-    // 初始化进程管理
-    proc_init();
-    // 初始化内存管理
-    init_mm();
-    
+// 测试 virtio-blk 驱动
+void test_virtio_blk(void) {
+    uart_puts("Testing virtio block device...\n");
+
+    // 分配一个缓冲区用于测试
+    char test_buf[512];
+
+    // 初始化测试数据
+    for(int i = 0; i < 512; i++) {
+        test_buf[i] = i & 0xFF;
+    }
+
+    uart_puts("Writing test data to sector 0...\n");
+
+    // 尝试写入扇区 0
+    if(virtio_blk_rw(test_buf, 0, 1) == 0) {
+        uart_puts("Write successful\n");
+
+        // 清空缓冲区
+        for(int i = 0; i < 512; i++) {
+            test_buf[i] = 0;
+        }
+
+        uart_puts("Reading from sector 0...\n");
+
+        // 尝试读取扇区 0
+        if(virtio_blk_rw(test_buf, 0, 0) == 0) {
+            uart_puts("Read successful\n");
+
+            // 验证数据
+            int correct = 1;
+            for(int i = 0; i < 512; i++) {
+                if(test_buf[i] != (i & 0xFF)) {
+                    correct = 0;
+                    break;
+                }
+            }
+
+            if(correct) {
+                uart_puts("Data verification successful!\n");
+            } else {
+                uart_puts("Data verification failed!\n");
+            }
+        } else {
+            uart_puts("Read failed\n");
+        }
+    } else {
+        uart_puts("Write failed\n");
+    }
+}
+
+void test_proc_and_mm(void) {
     // 创建三个测试进程
     struct proc *p1 = proc_alloc();
     struct proc *p2 = proc_alloc();
     struct proc *p3 = proc_alloc();
-    
+
     if(!p1 || !p2 || !p3) {
         uart_puts("Failed to allocate processes!\n");
         return;
@@ -125,15 +170,31 @@ void main(void) {
     init_proc_stack(p1, proc1_func, stack1, 16 * 1024);
     init_proc_stack(p2, proc2_func, stack2, 16 * 1024);
     init_proc_stack(p3, proc3_func, stack3, 16 * 1024);
-    
+
     // 将进程加入就绪队列
     p1->state = RUNNABLE;
     p2->state = RUNNABLE;
     p3->state = RUNNABLE;
-    
+
 
     // 启动调度器
     scheduler();
+}
+
+void main(void) {
+    // 初始化串口
+    uart_init();
+    // 初始化进程管理
+    proc_init();
+    // 初始化内存管理
+    init_mm();
+    // 初始化 virtio 块设备
+    virtio_blk_init();
+    
+    // 测试 virtio 块设备
+    test_virtio_blk();
+    // 测试进程管理和内存管理
+    test_proc_and_mm();
     
     // 如果调度器返回（不应该发生），则停止系统
     uart_puts("Main function returned. System halted.\n");

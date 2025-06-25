@@ -37,7 +37,7 @@ set(SOURCES
         src/kernel/proc.c
         src/kernel/switch.S
         src/kernel/mm.c
-        src/kernel/mm.h
+        src/kernel/virtio_blk.c
 )
 
 # 创建可执行文件
@@ -55,8 +55,30 @@ add_custom_command(TARGET kernel.elf POST_BUILD
 
 # 设置QEMU运行目标
 set(CPUS 1 CACHE STRING "Number of CPUs to use in QEMU")
+
+# 创建磁盘镜像目标
+add_custom_target(disk.img
+        COMMAND ${CMAKE_COMMAND} -E echo "Creating 10MB disk image..."
+        COMMAND ${CMAKE_COMMAND} -E remove -f disk.img
+        COMMAND dd if=/dev/zero of=disk.img bs=1M count=10
+        COMMENT "Creating 10MB disk image"
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+
+# 添加单独的创建磁盘目标
+add_custom_target(create-disk
+        COMMAND ${CMAKE_COMMAND} -E echo "Creating 10MB disk image..."
+        COMMAND ${CMAKE_COMMAND} -E remove -f disk.img
+        COMMAND dd if=/dev/zero of=disk.img bs=1M count=10
+        COMMAND ${CMAKE_COMMAND} -E echo "Disk image created: disk.img"
+        COMMENT "Creating 10MB disk image"
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+
+# 修改 qemu 目标，依赖磁盘镜像
 add_custom_target(qemu
         COMMAND ${CMAKE_COMMAND} --build . --target kernel.elf
+        COMMAND ${CMAKE_COMMAND} --build . --target disk.img
         COMMAND qemu-system-aarch64
         -cpu cortex-a72
         -machine virt,gic-version=3
@@ -68,9 +90,11 @@ add_custom_target(qemu
         -monitor none
         -d guest_errors
         -D qemu.log
-        DEPENDS kernel.elf
+        -drive file=disk.img,if=none,format=raw,id=x0
+        -device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0
+        DEPENDS kernel.elf disk.img
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        COMMENT "Running QEMU with kernel.bin"
+        COMMENT "Running QEMU with kernel.bin and virtio disk"
 )
 
 # 添加清理目标
