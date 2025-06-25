@@ -28,6 +28,22 @@ void memset(void *dest, char c, uint64 len) {
         *d = c;
 }
 
+void *memcpy(void *dest, const void *src, uint32 n) {
+    uint8 *d = (uint8*)dest;
+    const uint8 *s = (const uint8*)src;
+    for (uint32 i = 0; i < n; i++) d[i] = s[i];
+    return dest;
+}
+
+int memcmp(const void *s1, const void *s2, uint32 n) {
+    const uint8 *a = (const uint8*)s1;
+    const uint8 *b = (const uint8*)s2;
+    for (uint32 i = 0; i < n; i++) {
+        if (a[i] != b[i]) return a[i] - b[i];
+    }
+    return 0;
+}
+
 void init_mm(void) {
     memset(bitmap, 0, BITMAP_SIZE);
 
