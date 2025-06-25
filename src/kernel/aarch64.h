@@ -1,6 +1,7 @@
-#include "types.h"
 #ifndef _AARCH64_H
 #define _AARCH64_H
+
+#include "types.h"
 
 // 获取所在核心
 static inline uint64 cpuid()

@@ -1,5 +1,6 @@
-#ifndef _FAT_H_
-#define _FAT_H_
+#ifndef _FAT_H
+#define _FAT_H
+
 #include "types.h"
 
 struct fat_bpb {
@@ -35,9 +36,10 @@ struct fat_dir_entry {
     uint32 size;
 } __attribute__((packed));
 
+// 函数声明
 int fat_init();
 int fat_read_file(const char *name, void *buf, uint32 size, uint32 offset);
 int fat_write_file(const char *name, const void *buf, uint32 size, uint32 offset);
 int fat_list_dir(const char *path, struct fat_dir_entry *entries, int max_entries);
 
-#endif // _FAT_H_ 
+#endif

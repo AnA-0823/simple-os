@@ -1,6 +1,7 @@
-#include "types.h"
 #ifndef _PROC_H
 #define _PROC_H
+
+#include "types.h"
 
 // CPU数
 #define NCPU 1
@@ -57,4 +58,4 @@ void yield(void);
 // 汇编实现的上下文切换
 extern void switch_context(struct context *old, struct context *new);
 
-#endif 
+#endif

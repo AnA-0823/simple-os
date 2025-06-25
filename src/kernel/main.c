@@ -7,8 +7,8 @@
 // 测试进程函数
 void proc1_func(void) {
     while(1) {
-        uart_puts("Process 1 running...\n");
-        uart_puts("Process 1 need input:\n");
+        uart_puts("进程1正在运行...\n");
+        uart_puts("进程1等待输入（回车确认）：\n");
         char c;
         do {
           c = uart_getc();
@@ -21,8 +21,8 @@ void proc1_func(void) {
 
 void proc2_func(void) {
     while(1) {
-        uart_puts("Process 2 running...\n");
-        uart_puts("Process 2 need input:\n");
+        uart_puts("进程2正在运行...\n");
+        uart_puts("进程2等待输入（回车确认）：\n");
         char c;
         do {
           c = uart_getc();
@@ -35,8 +35,8 @@ void proc2_func(void) {
 
 void proc3_func(void) {
     while(1) {
-        uart_puts("Process 3 running...\n");
-        uart_puts("Process 3 need input:\n");
+        uart_puts("进程3正在运行...\n");
+        uart_puts("进程3等待输入（回车确认）：\n");
         char c;
         do {
           c = uart_getc();
@@ -49,10 +49,10 @@ void proc3_func(void) {
 
 // 打印进程上下文信息
 static void print_context_info(struct context *ctx, const char *name) {
-    uart_puts("\nContext info for ");
+    uart_puts("\n上下文信息：");
     uart_puts(name);
     uart_puts(":\n");
-    uart_puts("x30 (return address) = 0x");
+    uart_puts("x30（返回地址） = 0x");
     uart_put_hex(ctx->x30);
     uart_puts("\n");
     uart_puts("sp = 0x");
@@ -85,24 +85,24 @@ void init_proc_stack(struct proc *p, void (*func)(void), void *stack, uint32 sta
     p->context.x29 = 0;  // 帧指针
 
     // 打印初始化信息
-    uart_puts("\nInitializing process ");
+    uart_puts("\n正在初始化进程 ");
     uart_putc('0' + p->pid);
     uart_puts("\n");
-    uart_puts("Stack base = 0x");
+    uart_puts("栈基址 = 0x");
     uart_put_hex((uint64)stack);
     uart_puts("\n");
-    uart_puts("Stack top = 0x");
+    uart_puts("栈顶 = 0x");
     uart_put_hex((uint64)stack_top);
     uart_puts("\n");
-    uart_puts("Function address = 0x");
+    uart_puts("函数地址 = 0x");
     uart_put_hex((uint64)func);
     uart_puts("\n");
-    print_context_info(&p->context, "initial context");
+    print_context_info(&p->context, "初始上下文");
 }
 
 // 测试 virtio-blk 驱动
 void test_virtio_blk(void) {
-    uart_puts("Testing virtio block device...\n");
+    uart_puts("正在测试virtio块设备...\n");
 
     // 分配一个缓冲区用于测试
     char test_buf[512];
@@ -112,22 +112,22 @@ void test_virtio_blk(void) {
         test_buf[i] = i & 0xFF;
     }
 
-    uart_puts("Writing test data to sector 0...\n");
+    uart_puts("正在写入测试数据到扇区0...\n");
 
     // 尝试写入扇区 0
     if(virtio_blk_rw(test_buf, 0, 1) == 0) {
-        uart_puts("Write successful\n");
+        uart_puts("写入成功\n");
 
         // 清空缓冲区
         for(int i = 0; i < 512; i++) {
             test_buf[i] = 0;
         }
 
-        uart_puts("Reading from sector 0...\n");
+        uart_puts("正在从扇区0读取...\n");
 
         // 尝试读取扇区 0
         if(virtio_blk_rw(test_buf, 0, 0) == 0) {
-            uart_puts("Read successful\n");
+            uart_puts("读取成功\n");
 
             // 验证数据
             int correct = 1;
@@ -139,15 +139,15 @@ void test_virtio_blk(void) {
             }
 
             if(correct) {
-                uart_puts("Data verification successful!\n");
+                uart_puts("数据校验成功！\n");
             } else {
-                uart_puts("Data verification failed!\n");
+                uart_puts("数据校验失败！\n");
             }
         } else {
-            uart_puts("Read failed\n");
+            uart_puts("读取失败\n");
         }
     } else {
-        uart_puts("Write failed\n");
+        uart_puts("写入失败\n");
     }
 }
 
@@ -184,11 +184,11 @@ void test_fat(void) {
     for (int i = 0; i < n; i++) {
         if (entries[i].name[0] == 0x00 || entries[i].name[0] == 0xE5) continue; // 跳过空/已删除
         // 打印8.3文件名
-        char name[12];
+        char name[13];
         for (int j = 0; j < 8; j++) name[j] = entries[i].name[j];
         name[8] = '.';
         for (int j = 0; j < 3; j++) name[9 + j] = entries[i].name[8 + j];
-        name[11] = 0;
+        name[12] = 0;
         uart_puts("  ");
         uart_puts(name);
         uart_puts(" size: ");
@@ -205,7 +205,7 @@ void test_proc_and_mm(void) {
     struct proc *p3 = proc_alloc();
 
     if(!p1 || !p2 || !p3) {
-        uart_puts("Failed to allocate processes!\n");
+        uart_puts("进程分配失败！\n");
         return;
     }
 
@@ -247,6 +247,6 @@ void main(void) {
     test_proc_and_mm();
     
     // 如果调度器返回（不应该发生），则停止系统
-    uart_puts("Main function returned. System halted.\n");
+    uart_puts("主函数返回，系统已停止。\n");
     while(1);
 }
