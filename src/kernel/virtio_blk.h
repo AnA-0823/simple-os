@@ -21,4 +21,19 @@
 #define VIRTIO_MMIO_INTERRUPT_ACK      0x064 // write-only
 #define VIRTIO_MMIO_STATUS             0x070 // read/write
 
+// 状态寄存器位定义
+#define VIRTIO_CONFIG_S_ACKNOWLEDGE    1
+#define VIRTIO_CONFIG_S_DRIVER         2
+#define VIRTIO_CONFIG_S_DRIVER_OK      4
+#define VIRTIO_CONFIG_S_FEATURES_OK    8
+
+// 设备特性位定义
+#define VIRTIO_BLK_F_RO                5    // Disk is read-only
+#define VIRTIO_BLK_F_SCSI              7    // Supports scsi command passthru
+#define VIRTIO_BLK_F_CONFIG_WCE        11   // Writeback mode available in config
+#define VIRTIO_BLK_F_MQ                12   // support more than one vq
+#define VIRTIO_F_ANY_LAYOUT            27
+#define VIRTIO_RING_F_INDIRECT_DESC    28
+#define VIRTIO_RING_F_EVENT_IDX        29
+
 #endif
